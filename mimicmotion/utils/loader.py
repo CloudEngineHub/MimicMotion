@@ -41,8 +41,11 @@ def create_pipeline(infer_config, device):
     """
     mimicmotion_models = MimicMotionModel(infer_config.base_model_path)
     # Implement safe globals whitelist
-    allowed_modules = ['torch', 'collections', '__main__', 'mimicmotion']
-    with torch.serialization.safe_globals(*allowed_modules):
+    if hasattr(torch.serialization, "safe_globals"):
+        allowed_modules = ['torch', 'collections', '__main__', 'mimicmotion']
+        with torch.serialization.safe_globals(*allowed_modules):
+            checkpoint = torch.load(infer_config.ckpt_path, map_location="cpu", weights_only=True)
+    else:
         checkpoint = torch.load(infer_config.ckpt_path, map_location="cpu", weights_only=True)
     # Load model checkpoint
     mimicmotion_models.load_state_dict(checkpoint, strict=False)
